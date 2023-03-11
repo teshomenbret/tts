@@ -1,21 +1,17 @@
 import { useState } from "react";
+import { AiFillDelete, AiFillEdit } from "react-icons/ai";
 
-const AddQuiz = () => {
-  const [questionType, setQuestionType] = useState("mcq"); // default to MCQ question type
-  const [title, setTitle] = useState("");
-  const [question, setQuestion] = useState("");
+function AddQuiz({ onSave, onClose }) {
+  const [questionText, setQuestionText] = useState("");
+  const [answerText, setAnswerText] = useState("");
   const [options, setOptions] = useState([]);
   const [correctOption, setCorrectOption] = useState(null);
-  const handleQuestionTypeChange = (event) => {
-    setQuestionType(event.target.value);
-  };
-  const handleTitle=(event)=>{
-    setTitle(event.title);
-  }
+  const [questionType, setQuestionType] = useState("");
+  const [question, setQuestion] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
   const handleQuestionChange = (event) => {
     setQuestion(event.target.value);
   };
-
   const handleOptionChange = (optionIndex, event) => {
     const newOptions = [...options];
     newOptions[optionIndex] = event.target.value;
@@ -33,26 +29,31 @@ const AddQuiz = () => {
       setCorrectOption(null);
     }
   };
-
+  const handleEditOption = (optionIndex, newOptionText) => {
+    setIsEditing(false);
+    const newOptions = [...options];
+    newOptions[optionIndex] = newOptionText;
+    setOptions(newOptions);
+  };
+  const handleOptionEdit = () => {
+    setIsEditing(true);
+  };
   const handleCorrectOptionChange = (event) => {
     setCorrectOption(parseInt(event.target.value));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log({
+  const handleSave = () => {
+    onSave({
       questionType,
-      question,
+      questionText,
+      answerText,
       options,
-      correctOption,
     });
-    // reset form fields
-    setQuestionType("mcq");
-    setQuestion("");
+    setQuestionType("");
+    setQuestionText("");
+    setAnswerText("");
     setOptions([]);
-    setCorrectOption(null);
   };
-
   let formFields = null;
   switch (questionType) {
     case "mcq":
@@ -79,9 +80,16 @@ const AddQuiz = () => {
               <button
                 type="button"
                 onClick={() => handleRemoveOption(index)}
-                className="bg-red-500 hover:bg-red-600 text-white rounded py-2 px-4"
+                className="hover:text-slate-800 text-black rounded py-2 px-4"
               >
-                Remove
+                <AiFillDelete />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEditOption()}
+                className="text-green-500 hover:text-lime-600  rounded py-2 px-4"
+              >
+                <AiFillEdit />
               </button>
             </div>
           ))}
@@ -94,6 +102,7 @@ const AddQuiz = () => {
           </button>
         </>
       );
+
       break;
     case "trueFalse":
       formFields = (
@@ -123,7 +132,7 @@ const AddQuiz = () => {
         </>
       );
       break;
-    case "other":
+    case "short-answer":
       formFields = (
         <input
           type="text"
@@ -138,57 +147,83 @@ const AddQuiz = () => {
     default:
       formFields = null;
   }
-  return (
-    <>
-    <form onSubmit={handleSubmit}
-    className="px-4  py-4">
-    <div className="justify-center">
-        <label>Title of Quiz:</label>
-        <input
-          type="text"
-          placeholder="Title of quiz"
-          value={title}
-          onChange={handleTitle}
-          className="border border-gray-300 rounded py-2 px-4 w-full"
-          required
-        />  
-    </div>
-      <div className="flex items-center mb-4 mt-2">
-        <label className="mr-4">Question Type:</label>
-        <select
-          value={questionType}
-          onChange={handleQuestionTypeChange}
-          className="border border-gray-300 rounded py-2 px-4"
-        >
-          <option value="mcq">Multiple Choice</option>
-          <option value="trueFalse">True/False</option>
-          <option value="other">Short Answer</option>
-        </select>
-      </div>
-      <div className="mb-4">
-        <label>Question:</label>
-        <input
-          type="text"
-          placeholder="Question"
-          value={question}
-          onChange={handleQuestionChange}
-          className="border border-gray-300 rounded py-2 px-4 w-full"
-          required
-        />
-      </div>
-      <div className="mb-4">
-        <label>Options:</label>
-        {formFields}
-      </div>
-      <button
-        type="submit"
-        className="bg-blue-500 hover:bg-blue-600 text-white rounded py-2 px-4"
-      >
-        Add Question
-      </button>
-    </form>
-    </>
-  );
-};
 
+  return (
+    <div className="relative  inset-0 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          className="fixed inset-0 transition-opacity"
+          aria-hidden="true"
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+        >
+          &#8203;
+        </span>
+        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+          <h4 className="text-lg font-medium mb-4">Add a Question</h4>
+
+          <div className="mb-4">
+            <label
+              htmlFor="question-type-dropdown"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Question Type:
+            </label>
+            <select
+              id="question-type-dropdown"
+              name="questionType"
+              value={questionType}
+              onChange={(e) => setQuestionType(e.target.value)}
+              className="w-full mt-1"
+            >
+              <option value="">Select a question type</option>
+              <option value="mcq">Multiple Choice</option>
+              <option value="trueFalse">True or False</option>
+              <option value="short-answer">Short Answer</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <label>Question:</label>
+            <input
+              type="text"
+              placeholder="Question"
+              value={question}
+              onChange={handleQuestionChange}
+              className="border border-gray-300 rounded py-2 px-4 w-full"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label>Options:</label>
+            {formFields}
+          </div>
+
+          <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+              disabled={!questionType || !questionText || !answerText}
+            >
+              Save and Next
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+            >
+              Finish
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 export default AddQuiz;
