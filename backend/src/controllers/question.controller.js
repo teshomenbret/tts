@@ -2,10 +2,12 @@
 import extend from 'lodash/extend.js'
 import errorHandler from '../helpers/dbErrorHandler.js'
 import QuizQuestions from '../models/question.model.js'
+import userCtr from './user.controller.js'
 
 const create = async (req, res) => {
     try {     
         const question = new QuizQuestions(req.body) 
+        console.log(req.body)
         await question.save()
         return res.status(200).json({
             question
@@ -19,7 +21,7 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
     try {
-        let questions = await QuizQuestions.find()
+        let questions = await QuizQuestions.find({}).limit(5).exec();
         res.json(questions)
     } catch (err) {
         return res.status(400).json({
@@ -28,33 +30,33 @@ const list = async (req, res) => {
     }
 }
 
-// const categoryByID = async (req, res, next, id) => {
-//     try {
-//         let category = await Category.findById(id)
-//         if (!category)
-//             return res.status(400).json({
-//                     error: "category not found"
-//                 })
+const questionByID = async (req, res, next, id) => {
+    try {
+        let question = await QuizQuestions.findById(id)
+        if (!question)
+            return res.status(400).json({
+                    error: "question not found"
+                })
 
-//         req.category = category
-//         next()
-//     } catch (err) {
-//             return res.status(400).json({
-//                 error: "Could not retrieve category"
-//             })
-//     }
-// }
+        req.question = question
+        next()
+    } catch (err) {
+            return res.status(400).json({
+                error: "Could not retrieve question"
+            })
+    }
+}
 
 const read = (req, res) => {
-    return res.json(req.category)
+    return res.json(req.question)
 }
 
 const update = async (req, res) => {
     try {
-        let category = req.category
-        category = extend(category, req.body)
-        await category.save()
-        res.json(category)
+        let question = req.question
+        question = extend(question, req.body)
+        await question.save()
+        res.json(question)
     } catch (err) {
         return res.status(400).json({
             error: errorHandler.getErrorMessage(err)
@@ -64,9 +66,9 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
     try {
-        let category = req.category
-        let deletedCategory = await category.remove()
-        res.json(deletedCategory)
+        let question = req.question
+        let dquestion = await category.remove()
+        res.json(dquestion)
     } catch (err) {
         return res.status(400).json({
             error: errorHandler.getErrorMessage(err)
@@ -75,4 +77,4 @@ const remove = async (req, res) => {
 }
 
 
-export default { create,update, read, list, remove }
+export default { create,update, read, list, remove,questionByID }

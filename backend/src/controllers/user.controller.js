@@ -8,7 +8,7 @@ const create = async (req, res) => {
         const user = new User(req.body) 
         await user.save()
         return res.status(200).json({
-            message: "Successfully signed up!"
+            message: "ok"
         })
     } catch (err) {
         return res.status(400).json({
@@ -19,7 +19,7 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
     try {
-        let users = await User.find().select('name email updated created')
+        let users = await User.find()
         res.json(users)
     } catch (err) {
         return res.status(400).json({
@@ -28,16 +28,25 @@ const list = async (req, res) => {
     }
 }
 
-const userByID = async (req, res, next, id) => {
+
+const  familarize =  async (req, res) => {
     try {
-        let user = await User.findById(id)
+        console.log(req.body)
+        let user = await User.findOne({ id:req.body.id })
         if (!user)
             return res.status(400).json({
                     error: "User not found"
                 })
 
-        req.profile = user
-        next()
+        user.no_play +=1
+        user.total_correct =+req.body.correct
+        const useAvaerge =  user.avarege_score 
+        user.avarege_score  = (req.body.correct+useAvaerge)/user.no_play
+        await user.save()
+        return res.status(200).json({
+            message: "ok"
+        })
+        
     } catch (err) {
             return res.status(400).json({
                 error: "Could not retrieve user"
@@ -45,27 +54,58 @@ const userByID = async (req, res, next, id) => {
     }
 }
 
-const read = (req, res) => {
-    req.profile.hashed_password = undefined
-    req.profile.salt = undefined
-    return res.json(req.profile)
-}
-
-const update = async (req, res) => {
+const  coupon =  async (req, res) => {
     try {
-        let user = req.profile
-        user = extend(user, req.body)
-        // user.updated = Date.now()
+        const user = await User.findOne({ id:req.body.id })
+        if (!user)
+            return res.status(400).json({
+                    error: "User not found"
+                })
+
+        const couponPercent = (user.total_correct /(user.no_play - user.total_correct))*user.avarege_score
+        const couponKey = `${couponPercent}:${user._id}`
+        user.couponPercent = couponPercent
+        user.couponKey  =couponKey
         await user.save()
-        user.hashed_password = undefined
-        user.salt = undefined
-        res.json(user)
-    } catch (err) {
-        return res.status(400).json({
-            error: errorHandler.getErrorMessage(err)
+        return res.status(200).json({
+            couponKey:couponKey,
+            couponPercent:couponPercent
         })
+        
+    } catch (err) {
+            return res.status(400).json({
+                error: "some thing goose wrong"
+            })
     }
 }
+
+const  referal =  async (req, res) => {
+    try {
+        
+        const guest = await User.findOne({ id:req.body.guest_id })
+        if (!guest){
+            const user = await User.findOne({ id:req.body.referral_id })
+            user.referral_number += 1
+            const num = user.referral_number 
+            await user.save()
+            return res.status(200).json({
+                result: "ok",
+                number:num
+            })
+        }
+        else{
+            return res.status(200).json({
+                result: "no"
+            })
+        }
+            
+    } catch (err) {
+            return res.status(400).json({
+                error: "no"
+            })
+    }
+}
+
 
 const remove = async (req, res) => {
     try {
@@ -82,4 +122,4 @@ const remove = async (req, res) => {
 }
 
 
-export default { create,update, userByID, read, list, remove }
+export default { create, list, remove, familarize, coupon, referal}

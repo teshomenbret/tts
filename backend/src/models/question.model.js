@@ -13,7 +13,7 @@ const QuizQuestionsSchema = new mongoose.Schema(
             },
 
             answers:{
-                type:String,
+                type:Number,
                 required:true
             },
             open_period:{
