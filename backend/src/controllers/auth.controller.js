@@ -8,10 +8,10 @@ const signin = async (req, res) => {
 
     try {
 
-        let user = await User.findOne({ "email": req.body.email })
+        let user = await User.findOne({ "username": req.body.username })
         if (!user)
             return res.status(401).json({ error: "User not found" })
-        if (!user.authenticate(req.body.password)) {
+        if (!user.password == req.body.password) {
             return res.status(401).send({ error: "Email and password don't match." })
         }
 
@@ -21,7 +21,7 @@ const signin = async (req, res) => {
                         },
                         config.jwtSecret , 
                         
-                        { expiresIn: 60 * 60 }
+                        { expiresIn: 600 * 600 }
                 
                 ); 
 
@@ -89,7 +89,7 @@ const isAdmin = (req, res, next) => {
     next();
 };
    
-export default { signin, signout,requireSignin, hasAuthorization,isAdmin }
+export default {signin, signout,requireSignin, hasAuthorization,isAdmin }
 
 
 

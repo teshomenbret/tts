@@ -1,4 +1,3 @@
-// looks like fineshed
 import extend from 'lodash/extend.js'
 import errorHandler from '../helpers/dbErrorHandler.js'
 import QuizQuestions from '../models/question.model.js'
